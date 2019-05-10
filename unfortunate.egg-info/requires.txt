@@ -1,0 +1,6 @@
+click
+gphoto2
+opencv-python
+numpy
+scipy
+pymata_aio

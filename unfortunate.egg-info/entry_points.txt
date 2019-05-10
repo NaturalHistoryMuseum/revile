@@ -1,0 +1,4 @@
+
+        [console_scripts]
+        unfortunate=unfortunate.cli:cli
+    
