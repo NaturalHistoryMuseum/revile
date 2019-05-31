@@ -1,6 +1,7 @@
 import time
 
 from pymata_aio.pymata3 import PyMata3
+from pymata_aio.constants import Constants
 
 
 class Stepper:
@@ -35,3 +36,26 @@ class Stepper:
         self.board.stepper_step(rpm, steps)
         time.sleep(time_to_finish + 2)
         print(f'{n} revolution{"s" if n != 1 else ""} done in {time_to_finish}s')
+
+
+class Servo:
+    def __init__(self, pin):
+        self.board = PyMata3()
+        self.pin = pin
+        self.setup()
+
+    def setup(self):
+        self.board.send_reset()
+        time.sleep(2)
+        self.board.servo_config(self.pin)
+        time.sleep(2)
+
+    def spin(self, spr, n=1):
+        step_size = 1
+        sweep_size = 180
+        time_per_step = (spr / (sweep_size / step_size)) * n
+        for i in range(0, sweep_size, step_size):
+            self.board.analog_write(self.pin, i)
+            self.board.sleep(time_per_step)
+        self.board.sleep(5)
+

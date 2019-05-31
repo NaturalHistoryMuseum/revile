@@ -4,7 +4,7 @@ import time
 import gphoto2 as gp
 
 
-class CanonCamera:
+class GenericCamera:
     def __init__(self):
         self.context = gp.Context()
         self.camera = gp.Camera()
@@ -23,11 +23,19 @@ class CanonCamera:
         :param choice_id: the id of the value (use widget.get_choices() to see the options) to set
         '''
         widget = self.camera.get_single_config(config_name)
-        choice = widget.get_choice(choice_id)
-        widget.set_value(choice)
+        if isinstance(choice_id, str):
+            gp.gp_widget_set_value_text(widget, choice_id)
+        else:
+            try:
+                # for i, x in enumerate(widget.get_choices()):
+                #     print(f'{i}. {x}')
+                choice = widget.get_choice(choice_id)
+            except gp.GPhoto2Error:
+                choice = choice_id
+            widget.set_value(choice)
         self.camera.set_single_config(config_name, widget)
 
-    def _wait_for_file(self, timeout=3):
+    def wait_for_file(self, timeout=3):
         '''
         Wait for a "new file" event, then download the new file.
         :param timeout: the amount of time (in seconds) to wait for the event before failing
@@ -44,9 +52,15 @@ class CanonCamera:
                     event_data.folder, event_data.name, gp.GP_FILE_TYPE_NORMAL)
                 target_path = os.path.join(os.getcwd(), event_data.name)
                 cam_file.save(target_path)
+                self.camera.file_delete(event_data.folder, event_data.name)
                 return target_path
         raise FileNotFoundError(f'No new files could be found in {timeout}s.')
 
+    def autofocus(self):
+        pass
+
+
+class CanonCamera(GenericCamera):
     def video(self, length):
         '''
         Capture a video.
@@ -55,7 +69,40 @@ class CanonCamera:
         '''
         self._set_config('capturetarget', 1)
         time.sleep(1)  # safety buffer to make sure the motor has started turning
+
         self._set_config('movierecordtarget', 0)
-        time.sleep(length)
+        print('Recording...')
+        time.sleep(length * 1.2)
         self._set_config('movierecordtarget', 1)
-        return self._wait_for_file(10)
+        print('Finished.')
+        return self.wait_for_file(10)
+
+    def autofocus(self):
+        self._set_config('viewfinder', 1)
+        is_focused = False
+        loopout = 200
+        loop_count = 0
+        while not is_focused and loop_count < loopout:
+            self._set_config('autofocusdrive', 1)
+            event_type, event_data = self.camera.wait_for_event(1000, self.context)
+            loop_count += 1
+            is_focused = event_data == 'Button 1'  # this is probably wrong but works... ish
+        if not is_focused:
+            raise Exception('Could not focus!')
+        self._set_config('viewfinder', 0)
+
+
+class NikonCamera(GenericCamera):
+    def video(self, length):
+        '''
+        Capture a video.
+        :param length: the length of the video to capture
+        :return: the path to the downloaded file or None
+        '''
+        self._set_config('capturetarget', 1)
+        time.sleep(1)  # safety buffer to make sure the motor has started turning
+        self._set_config('movie', 1)
+        time.sleep(length)
+        self._set_config('movie', 0)
+        return self.wait_for_file(10)
+

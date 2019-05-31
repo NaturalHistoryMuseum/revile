@@ -1,9 +1,10 @@
 from threading import Thread
-
+import time
 import click
+import math
 
 from .camera import CanonCamera
-from .motor import Stepper
+from .motor import Stepper, Servo
 from .process import Stream
 
 
@@ -14,11 +15,12 @@ def cli():
 
 @cli.command()
 @click.option('--length', '-l', default=10, help='The length of the video/rotation (in seconds).')
-def video(length):
+@click.option('--servo', is_flag=True, default=False, help='Use a servo instead of a stepper motor')
+def video(length, servo):
     '''
     Takes a video and spins the motor at the same time, then processes the frames of the video file.
     '''
-    stepper = Stepper()
+    spinner = Stepper() if not servo else Servo(5)
 
     def _shoot_and_process():
         with CanonCamera() as camera:
@@ -28,7 +30,7 @@ def video(length):
         click.echo(imgpath)
 
     def _spin():
-        stepper.spin(length, 1.5)
+        spinner.spin(length, 1.5)
 
     camera_thread = Thread(target=_shoot_and_process)
     camera_thread.start()
@@ -40,23 +42,40 @@ def video(length):
 @click.option('--frames', '-f', default=100,
               help='The number of frames to capture (also; the width of the final image).')
 @click.option('--stream-port', default=2, help='The /dev/video device to read from.')
-def stream(frames, stream_port):
+@click.option('--servo', is_flag=True, default=False, help='Use a servo instead of a stepper motor')
+def stream(frames, stream_port, servo):
     '''
     Uses the preview frames from a camera connected in USB mode to create the image. Requires
     additional setup; please see README for details.
     '''
-    stepper = Stepper()
+    spinner = Stepper() if not servo else Servo(5)
     videostream = Stream(stream_port)
 
     length = frames / videostream.framerate
 
     def _shoot_and_process():
+        time.sleep(1)
         videostream.process(frames)
 
     def _spin():
-        stepper.spin(length, 1.5)
+        spinner.spin(length, 1.5)
 
     camera_thread = Thread(target=_shoot_and_process)
     camera_thread.start()
     _spin()
     camera_thread.join()
+
+
+@cli.command()
+@click.argument('diameter', type=click.FLOAT)
+@click.option('--ppm', default=21)
+@click.option('--fps', default=60)
+def estimate(diameter, ppm, fps):
+    circumference = math.pi * diameter
+    pixels = circumference * ppm
+    seconds = pixels / fps
+    click.echo(f'''
+    Try {int(seconds)} seconds:
+    
+    unfortunate video --length {int(seconds)}
+    ''')
