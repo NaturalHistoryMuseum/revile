@@ -87,5 +87,5 @@ def estimate(diameter, ppm, fps):
     click.echo(f'''
     Try {int(seconds)} seconds:
     
-    unfortunate video --length {int(seconds)}
+    revile video --length {int(seconds)}
     ''')

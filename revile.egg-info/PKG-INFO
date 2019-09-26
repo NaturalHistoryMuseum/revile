@@ -1,8 +1,8 @@
 Metadata-Version: 2.1
-Name: unfortunate
+Name: revile
 Version: 0.1
 Summary: Example code for slit scanning using a Canon DSLR and a 28BYJ-48 stepper motor.
-Home-page: https://github.com/alycejenni/unfortunately-named
+Home-page: https://github.com/alycejenni/revile
 Author: Ginger Butcher + Josh Humphries
 Author-email: alycejenni@gmail.com
 License: MIT
@@ -12,7 +12,7 @@ Description: This is a simple example package for slit scanning using a (fairly 
         At the moment this will only run on Python 3.6+, but it can probably be adapted.
         
         ```sh
-        pip install git+git://github.com/alycejenni/unfortunately-named.git#egg=unfortunate
+        pip install git+git://github.com/alycejenni/revile.git#egg=revile
         ```
         
         I have no idea if this works on anything but Linux.
@@ -49,7 +49,7 @@ Description: This is a simple example package for slit scanning using a (fairly 
         
         Then run this in a terminal to create and process a 20s video:
         ```sh
-        unfortunate video --length 20
+        revile video --length 20
         ```
         
         ### Webcam mode
@@ -64,7 +64,7 @@ Description: This is a simple example package for slit scanning using a (fairly 
         
         Once that's working (good luck), run this in a terminal to create and process 500 frames:
         ```sh
-        unfortunate stream --frames 500 --stream-port [DEVICE NUMBER HERE]
+        revile stream --frames 500 --stream-port [DEVICE NUMBER HERE]
         ```
         
         ## Note

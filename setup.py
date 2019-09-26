@@ -5,9 +5,9 @@ import os
 
 from setuptools import find_packages, setup
 
-NAME = 'unfortunate'
+NAME = 'revile'
 DESCRIPTION = 'Example code for slit scanning using a Canon DSLR and a 28BYJ-48 stepper motor.'
-URL = 'https://github.com/alycejenni/unfortunately-named'
+URL = 'https://github.com/alycejenni/revile'
 EMAIL = 'alycejenni@gmail.com'
 AUTHOR = 'Ginger Butcher + Josh Humphries'
 VERSION = '0.1'
@@ -44,7 +44,7 @@ setup(
     include_package_data=True,
     entry_points='''
         [console_scripts]
-        unfortunate=unfortunate.cli:cli
+        revile=revile.cli:cli
     ''',
     license='MIT',
     classifiers=[

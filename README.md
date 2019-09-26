@@ -4,7 +4,7 @@ This is a simple example package for slit scanning using a (fairly new) Canon DS
 At the moment this will only run on Python 3.6+, but it can probably be adapted.
 
 ```sh
-pip install git+git://github.com/alycejenni/unfortunately-named.git#egg=unfortunate
+pip install git+git://github.com/alycejenni/revile.git#egg=revile
 ```
 
 I have no idea if this works on anything but Linux.
@@ -41,7 +41,7 @@ The Canon DSLR needs to:
 
 Then run this in a terminal to create and process a 20s video:
 ```sh
-unfortunate video --length 20
+revile video --length 20
 ```
 
 ### Webcam mode
@@ -56,7 +56,7 @@ gphoto2 --stdout --capture-movie | ffmpeg -i - -vcodec rawvideo -pix_fmt yuv420p
 
 Once that's working (good luck), run this in a terminal to create and process 500 frames:
 ```sh
-unfortunate stream --frames 500 --stream-port [DEVICE NUMBER HERE]
+revile stream --frames 500 --stream-port [DEVICE NUMBER HERE]
 ```
 
 ## Note
