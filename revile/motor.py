@@ -38,7 +38,10 @@ class Stepper:
         time.sleep(time_to_finish + 2)
         duration = 0.2  # seconds
         freq = 880  # Hz
-        os.system('play -nq -t alsa synth {} sine {}'.format(duration, freq))
+        try:
+            os.system('play -nq -t alsa synth {} sine {}'.format(duration, freq))
+        except:
+            print('sox not installed - unable to play end-of-processing beep.')
         print(f'{n} revolution{"s" if n != 1 else ""} done in {time_to_finish}s')
 
 
@@ -62,4 +65,3 @@ class Servo:
             self.board.analog_write(self.pin, i)
             self.board.sleep(time_per_step)
         self.board.sleep(5)
-
