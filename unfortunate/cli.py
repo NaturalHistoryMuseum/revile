@@ -2,6 +2,7 @@ from threading import Thread
 import time
 import click
 import math
+import os
 
 from .camera import CanonCamera
 from .motor import Stepper, Servo
@@ -16,21 +17,30 @@ def cli():
 @cli.command()
 @click.option('--length', '-l', default=10, help='The length of the video/rotation (in seconds).')
 @click.option('--servo', is_flag=True, default=False, help='Use a servo instead of a stepper motor')
-def video(length, servo):
+@click.option('--outputdir', '-o', default=os.getcwd())
+def video(length, servo, outputdir):
     '''
     Takes a video and spins the motor at the same time, then processes the frames of the video file.
     '''
     spinner = Stepper() if not servo else Servo(5)
 
+    videodir = os.path.join(outputdir, 'videos')
+    rawdir = os.path.join(outputdir, 'raw')
+    croppeddir = os.path.join(outputdir, 'cropped')
+    for d in [outputdir, videodir, rawdir, croppeddir]:
+        if not os.path.exists(d):
+            os.mkdir(d)
+
     def _shoot_and_process():
-        with CanonCamera() as camera:
+        with CanonCamera(videodir) as camera:
             path = camera.video(length)
-        filestream = Stream(path)
+        filestream = Stream(path, rawdir)
         imgpath = filestream.process()
-        click.echo(imgpath)
+        cropped_imgpath = filestream.crop(croppeddir)
+        click.echo(cropped_imgpath)
 
     def _spin():
-        spinner.spin(length, 1.5)
+        spinner.spin(length, 2)
 
     camera_thread = Thread(target=_shoot_and_process)
     camera_thread.start()
@@ -58,7 +68,7 @@ def stream(frames, stream_port, servo):
         videostream.process(frames)
 
     def _spin():
-        spinner.spin(length, 1.5)
+        spinner.spin(length, 2)
 
     camera_thread = Thread(target=_shoot_and_process)
     camera_thread.start()

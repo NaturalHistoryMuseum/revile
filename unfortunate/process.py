@@ -1,4 +1,5 @@
 import math
+import os
 from datetime import datetime as dt
 from queue import Queue
 from threading import Thread
@@ -6,6 +7,7 @@ from threading import Thread
 import cv2
 import numpy as np
 from scipy import ndimage
+from skimage import feature
 
 
 class StreamReader(Thread):
@@ -91,7 +93,7 @@ class StreamProcessor(Thread):
 
 
 class Stream:
-    def __init__(self, port_or_file):
+    def __init__(self, port_or_file, output_dir):
         '''
         An opencv video stream.
         :param port_or_file: int if port, str file path if file
@@ -100,6 +102,8 @@ class Stream:
         self.is_file = not isinstance(port_or_file, int)
         self._start = None
         self._elapsed = None
+        self.output_dir = output_dir
+        self.fn = str(int(dt.timestamp(dt.now()))) + '.png'
 
     def __enter__(self):
         self._start = dt.now()
@@ -166,4 +170,20 @@ class Stream:
         image = ndimage.rotate(processor.image, 270)
         target_path = str(int(dt.timestamp(dt.now()))) + '.png'
         cv2.imwrite(target_path, image)
+        self.image = image
+        return target_path
+
+    def crop(self, output_dir):
+        b = 10
+        template = self.image[b:-b, :b, :]
+
+        img = self.image[b:-b, b:, :]
+        result = feature.match_template(img, template)
+        result = result[..., 0]
+        ij = np.unravel_index(np.argmax(result), result.shape)
+        x, y = ij[::-1]
+
+        whole_img = self.image[:, :x + b, :]
+        target_path = os.path.join(output_dir, self.fn)
+        cv2.imwrite(target_path, whole_img)
         return target_path

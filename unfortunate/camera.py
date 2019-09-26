@@ -5,9 +5,11 @@ import gphoto2 as gp
 
 
 class GenericCamera:
-    def __init__(self):
+    def __init__(self, output_dir):
         self.context = gp.Context()
         self.camera = gp.Camera()
+        self.output_dir = output_dir
+
 
     def __enter__(self):
         self.camera.init(self.context)
@@ -50,7 +52,7 @@ class GenericCamera:
             if event_type == gp.GP_EVENT_FILE_ADDED:
                 cam_file = self.camera.file_get(
                     event_data.folder, event_data.name, gp.GP_FILE_TYPE_NORMAL)
-                target_path = os.path.join(os.getcwd(), event_data.name)
+                target_path = os.path.join(self.output_dir, event_data.name)
                 cam_file.save(target_path)
                 self.camera.file_delete(event_data.folder, event_data.name)
                 return target_path
@@ -72,7 +74,7 @@ class CanonCamera(GenericCamera):
 
         self._set_config('movierecordtarget', 0)
         print('Recording...')
-        time.sleep(length * 1.2)
+        time.sleep(length + 2)
         self._set_config('movierecordtarget', 1)
         print('Finished.')
         return self.wait_for_file(10)

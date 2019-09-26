@@ -2,6 +2,7 @@ import time
 
 from pymata_aio.pymata3 import PyMata3
 from pymata_aio.constants import Constants
+import os
 
 
 class Stepper:
@@ -35,6 +36,9 @@ class Stepper:
         time_to_finish = steps * time_per_step
         self.board.stepper_step(rpm, steps)
         time.sleep(time_to_finish + 2)
+        duration = 0.2  # seconds
+        freq = 880  # Hz
+        os.system('play -nq -t alsa synth {} sine {}'.format(duration, freq))
         print(f'{n} revolution{"s" if n != 1 else ""} done in {time_to_finish}s')
 
 
