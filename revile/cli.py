@@ -1,11 +1,12 @@
-from threading import Thread
-import time
-import click
 import math
 import os
+import time
+from threading import Thread
+
+import click
 
 from .camera import CanonCamera
-from .motor import Stepper, Servo
+from .motor import Servo, Stepper
 from .process import Stream
 
 
@@ -17,8 +18,11 @@ def cli():
 @cli.command()
 @click.option('--length', '-l', default=10, help='The length of the video/rotation (in seconds).')
 @click.option('--servo', is_flag=True, default=False, help='Use a servo instead of a stepper motor')
-@click.option('--outputdir', '-o', default=os.getcwd())
-def video(length, servo, outputdir):
+@click.option('--outputdir', '-o', default=os.getcwd(), help='')
+@click.option('--rotation', '-r', default=0,
+              help='angle (in degrees clockwise) of the camera from horizontal; will be rounded '
+                   'to the nearest multiple of 90')
+def video(length, servo, outputdir, rotation):
     '''
     Takes a video and spins the motor at the same time, then processes the frames of the video file.
     '''
@@ -34,9 +38,9 @@ def video(length, servo, outputdir):
     def _shoot_and_process():
         with CanonCamera(videodir) as camera:
             path = camera.video(length)
-        filestream = Stream(path, rawdir)
+        filestream = Stream(path, rawdir, rotation)
         imgpath = filestream.process()
-        cropped_imgpath = filestream.crop(croppeddir)
+        cropped_imgpath = filestream.crop()
         click.echo(cropped_imgpath)
 
     def _spin():

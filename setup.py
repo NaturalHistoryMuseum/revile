@@ -6,7 +6,7 @@ import os
 from setuptools import find_packages, setup
 
 NAME = 'revile'
-DESCRIPTION = 'Example code for slit scanning using a Canon DSLR and a 28BYJ-48 stepper motor.'
+DESCRIPTION = 'Example code for rollout photography using a Canon DSLR and a 28BYJ-48 stepper motor.'
 URL = 'https://github.com/alycejenni/revile'
 EMAIL = 'alycejenni@gmail.com'
 AUTHOR = 'Ginger Butcher + Josh Humphries'
@@ -18,7 +18,8 @@ REQUIRED = [
     'opencv-python',
     'numpy',
     'scipy',
-    'pymata_aio'
+    'pymata_aio',
+    'scikit-image'
     ]
 
 readme = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'README.md')

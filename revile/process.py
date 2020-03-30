@@ -61,13 +61,14 @@ class StreamReader(Thread):
 
 class StreamProcessor(Thread):
     '''
-    Processes frames from a queue by extracting the middle column of pixels and concatenating them
-    together into an image.
+    Processes frames from a queue by extracting the middle column or row of pixels and concatenating
+    them together into an image.
     '''
 
-    def __init__(self, frame_queue, **kwargs):
+    def __init__(self, frame_queue: Queue, portrait=False, **kwargs):
         '''
         :param frame_queue: the queue to get the frames from
+        :param portrait: if the camera is in portrait orientation
         :param kwargs: Thread init kwargs
         '''
         super().__init__(**kwargs)
@@ -75,6 +76,7 @@ class StreamProcessor(Thread):
         self.image = None
         self.done = False
         self.count = 0
+        self.portrait = portrait
 
     def run(self):
         '''
@@ -83,20 +85,26 @@ class StreamProcessor(Thread):
         '''
         for frame_number, frame in iter(self.frame_queue.get, None):
             h, w, pix = frame.shape
-            midline = frame[h // 2, :, :].reshape((1, w, pix))
+            if self.portrait:
+                midline = frame[h // 2, :, :].reshape((1, w, pix))
+            else:
+                midline = frame[:, w // 2, :].reshape((h, 1, pix))
             if self.image is None:
                 self.image = midline
             else:
-                self.image = np.concatenate([self.image, midline], axis=0)
+                self.image = np.concatenate([self.image, midline], axis=0 if self.portrait else 1)
             self.count = frame_number
         self.done = True
 
 
 class Stream:
-    def __init__(self, port_or_file, output_dir):
+    def __init__(self, port_or_file, output_dir, rotation=0):
         '''
         An opencv video stream.
         :param port_or_file: int if port, str file path if file
+        :param output_dir:
+        :param rotation: angle (in degrees clockwise) of the camera from horizontal; will be
+                         rounded to the nearest multiple of 90
         '''
         self.port_or_file = port_or_file
         self.is_file = not isinstance(port_or_file, int)
@@ -104,6 +112,9 @@ class Stream:
         self._elapsed = None
         self.output_dir = output_dir
         self.fn = str(int(dt.timestamp(dt.now()))) + '.png'
+        self.rotation = round(rotation / 90) * 90
+        self._portrait = self.rotation in [90, 270]
+        self.image = None
 
     def __enter__(self):
         self._start = dt.now()
@@ -144,7 +155,7 @@ class Stream:
 
         frame_queue = Queue(maxsize=max_frame_queue_size)
         reader = StreamReader(self, frame_queue, frame_count)
-        processor = StreamProcessor(frame_queue)
+        processor = StreamProcessor(frame_queue, self._portrait)
         reader.start()
         processor.start()
 
@@ -167,13 +178,16 @@ class Stream:
 
         print(f'Processed in {self._elapsed} seconds '
               f'({round(reader.frame_count / self._elapsed, 1)} fps)')
-        image = ndimage.rotate(processor.image, 270)
-        target_path = str(int(dt.timestamp(dt.now()))) + '.png'
+        image = ndimage.rotate(processor.image, self.rotation)
+        target_dir = os.path.join(self.output_dir, 'raw')
+        if not os.path.exists(target_dir):
+            os.mkdir(target_dir)
+        target_path = os.path.join(target_dir, self.fn)
         cv2.imwrite(target_path, image)
         self.image = image
         return target_path
 
-    def crop(self, output_dir):
+    def crop(self):
         b = 10
         template = self.image[b:-b, :b, :]
 
@@ -184,6 +198,9 @@ class Stream:
         x, y = ij[::-1]
 
         whole_img = self.image[:, :x + b, :]
-        target_path = os.path.join(output_dir, self.fn)
+        target_dir = os.path.join(self.output_dir, 'crop')
+        if not os.path.exists(target_dir):
+            os.mkdir(target_dir)
+        target_path = os.path.join(target_dir, self.fn)
         cv2.imwrite(target_path, whole_img)
         return target_path

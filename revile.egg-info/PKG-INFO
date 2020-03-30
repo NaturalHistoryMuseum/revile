@@ -1,7 +1,7 @@
 Metadata-Version: 2.1
 Name: revile
 Version: 0.1
-Summary: Example code for slit scanning using a Canon DSLR and a 28BYJ-48 stepper motor.
+Summary: Example code for rollout photography using a Canon DSLR and a 28BYJ-48 stepper motor.
 Home-page: https://github.com/alycejenni/revile
 Author: Ginger Butcher + Josh Humphries
 Author-email: alycejenni@gmail.com
