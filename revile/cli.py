@@ -82,14 +82,26 @@ def stream(frames, stream_port, servo):
 
 @cli.command()
 @click.argument('diameter', type=click.FLOAT)
-@click.option('--ppm', default=21)
-@click.option('--fps', default=60)
-def estimate(diameter, ppm, fps):
-    circumference = math.pi * diameter
-    pixels = circumference * ppm
-    seconds = pixels / fps
+@click.option('--focal-length', '-l', default=100, help='Focal length in mm')
+@click.option('--frame-x', '-x', type=click.INT, default=720,
+              help='Size of the image/frame across the x axis of the vial (i.e. width if shooting '
+                   'landscape, height if portrait) in pixels')
+@click.option('--sensor-x', '-s', default=24,
+              help='Size of the sensor across the x axis of the vial (i.e. width if shooting '
+                   'landscape, height if portrait) in mm')
+@click.option('--ppmm', '-w', default=21,
+              help='Approximate width of 1mm, in pixels, at the centre of rotation')
+@click.option('--fps', '-r', default=60, help='Stream/video framerate')
+def estimate(diameter, focal_length, frame_x, sensor_x, ppmm, fps):
+    '''
+    Estimate the optimum length of rotation in frames and seconds.
+    '''
+    frames = math.ceil((2 * math.pi * diameter * focal_length * frame_x * ppmm) / (
+                (2 * focal_length * frame_x) - (diameter * sensor_x * ppmm)))
+    t = round(frames / fps, 1)
     click.echo(f'''
-    Try {int(seconds)} seconds:
+    Try {t} seconds or {frames} frames:
     
-    revile video --length {int(seconds)}
+    revile video --length {t}
+    revile stream --frames {frames}
     ''')
