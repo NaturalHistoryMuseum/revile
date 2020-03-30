@@ -18,11 +18,11 @@ def cli():
 @cli.command()
 @click.option('--length', '-l', default=10, help='The length of the video/rotation (in seconds).')
 @click.option('--servo', is_flag=True, default=False, help='Use a servo instead of a stepper motor')
-@click.option('--outputdir', '-o', default=os.getcwd(), help='')
-@click.option('--rotation', '-r', default=0,
+@click.option('--outputdir', '-o', default=os.getcwd(), help='A directory to save the files to')
+@click.option('--rotate', '-r', default=0,
               help='angle (in degrees clockwise) of the camera from horizontal; will be rounded '
                    'to the nearest multiple of 90')
-def video(length, servo, outputdir, rotation):
+def video(length, servo, outputdir, rotate):
     '''
     Takes a video and spins the motor at the same time, then processes the frames of the video file.
     '''
@@ -30,7 +30,7 @@ def video(length, servo, outputdir, rotation):
 
     videodir = os.path.join(outputdir, 'videos')
     rawdir = os.path.join(outputdir, 'raw')
-    croppeddir = os.path.join(outputdir, 'cropped')
+    croppeddir = os.path.join(outputdir, 'crop')
     for d in [outputdir, videodir, rawdir, croppeddir]:
         if not os.path.exists(d):
             os.mkdir(d)
@@ -38,10 +38,10 @@ def video(length, servo, outputdir, rotation):
     def _shoot_and_process():
         with CanonCamera(videodir) as camera:
             path = camera.video(length)
-        filestream = Stream(path, rawdir, rotation)
+        filestream = Stream(path, rawdir, rotate)
         imgpath = filestream.process()
-        cropped_imgpath = filestream.crop()
-        click.echo(cropped_imgpath)
+        cropped = filestream.crop()
+        click.echo(f'Saved 2 files to {imgpath} and {cropped}')
 
     def _spin():
         spinner.spin(length, 2)
@@ -81,6 +81,22 @@ def stream(frames, stream_port, servo):
 
 
 @cli.command()
+@click.argument('filepath')
+@click.option('--rotate', '-r', default=0,
+              help='angle (in degrees clockwise) of the image from horizontal; will be rounded '
+                   'to the nearest multiple of 90')
+@click.option('--outputdir', '-o', default=os.getcwd(), help='A directory to save the files to')
+def process(filepath, rotate, outputdir):
+    '''
+    Process a video file and transform it into a 2D "rolled-out" image.
+    '''
+    stream = Stream(filepath, outputdir, rotate)
+    imgpath = stream.process()
+    cropped = stream.crop()
+    click.echo(f'Saved 2 files to {imgpath} and {cropped}')
+
+
+@cli.command()
 @click.argument('diameter', type=click.FLOAT)
 @click.option('--focal-length', '-l', default=100, help='Focal length in mm')
 @click.option('--frame-x', '-x', type=click.INT, default=720,
@@ -97,7 +113,7 @@ def estimate(diameter, focal_length, frame_x, sensor_x, ppmm, fps):
     Estimate the optimum length of rotation in frames and seconds.
     '''
     frames = math.ceil((2 * math.pi * diameter * focal_length * frame_x * ppmm) / (
-                (2 * focal_length * frame_x) - (diameter * sensor_x * ppmm)))
+            (2 * focal_length * frame_x) - (diameter * sensor_x * ppmm)))
     t = round(frames / fps, 1)
     click.echo(f'''
     Try {t} seconds or {frames} frames:
