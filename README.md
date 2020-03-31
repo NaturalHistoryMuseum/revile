@@ -14,7 +14,7 @@ The code has only been tested and confirmed to work on a Linux OS, but it may wo
 Install using pip:
 
 ```sh
-pip install git+git://github.com/alycejenni/revile.git#egg=revile
+pip install git+git://github.com/NaturalHistoryMuseum/revile.git#egg=revile
 ```
 
 ## 1. Capturing
